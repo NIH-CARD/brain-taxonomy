@@ -73,15 +73,20 @@ unknown = []
 cell_types = [
     "oligo",
     "opc",
+    # neuron
     "glutamatergic",
-    "gabaergic",
+    "gabergic",
+    # astrocyte
     "protoplasmic_astrocyte",
     "fibrous_astrocyte",
+    # immune
     "microglia",
     "t_cell",
     "b_cell",
+    # blood_vessel
     "pericyte",
     "endothelial",
+    # unknown
     "unknown",
 ]
 
@@ -105,10 +110,10 @@ for e in colnms:
 
 
 # In[ ]:
-marker = np.unique(col)
+marker_genes = np.unique(col) # Note this alpahbetizes the list
 
 # In[ ]:
-df = pd.DataFrame(index=marker)
+df = pd.DataFrame(index=marker_genes)
 
 for t in cell_types:
     tt = eval(t)
@@ -127,3 +132,5 @@ df.to_csv(cellassign_file)
 markers_new = pd.read_csv(cellassign_file, index_col=0)
 print(markers_new)
 
+
+# %%

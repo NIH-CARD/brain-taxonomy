@@ -15,7 +15,12 @@ import numpy as np
 
 TAXONOMY_TABLE_v1 = "taxonomy-v1.xlsx"
 TAXONOMY_TABLE_v2 = "Taxa Marker (Frontal Cortex) List.xlsx"
-CELLASSIGN_MARKERS_TABLE = "cellassign_markers.csv"
+CELLASSIGN_MARKERS_TABLE = "cellassign_markers.csv" #"by hand"
+CELLASSIGN_FULL_MARKERS_TABLE = "cellassign_full_markers.csv"
+
+CELLASSIGN_SIMPLE1_MARKERS_TABLE = "cellassign_simple_markers.csv"
+CELLASSIGN_SIMPLE2_MARKERS_TABLE = "cellassign_simple_no_unknown_markers.csv"
+CELLASSIGN_XYLENA_MARKERS_TABLE = "cellassign_xylena_markers.csv"
 
 # In[ ]:
 root_path = Path.cwd()
@@ -73,6 +78,7 @@ def get_taxonomy(file_path:Path|None = None, version:str="v2") -> dict[pd.DataFr
 
         taxonomy[sheet_name] = cell_types
 
+    all_genes = np.unique(all_genes) # note this alpahbetizes the list
     return taxonomy, all_genes
 
 # In[ ]:
@@ -103,16 +109,16 @@ def make_markers_table_v2(dfs:dict, cell_types:list, all_genes:list) -> pd.DataF
     glutamatergic = NEURON + neuron_subs["glutamatergic"]
     gabergic = NEURON + neuron_subs["gabaergic"]
 
-    astrocyte_other = ASTROCYTE
+    astrocyte = ASTROCYTE
     protoplasmic_astrocyte = ASTROCYTE + astro_sub["protoplasmic"]
     fibrous_astrocyte = ASTROCYTE + astro_sub["fibrous"]
 
-    immune_other = IMMUNE
+    immune = IMMUNE
     microglia = IMMUNE + immune_sub["microglia"]
     t_cell = IMMUNE + immune_sub["t_cell"]
     b_cell = IMMUNE + immune_sub["b_cell"]
 
-    blood_other = BLOOD_VESSEL
+    blood = BLOOD_VESSEL
     pericyte = BLOOD_VESSEL + blood_sub["pericytes"]
     endothelial = BLOOD_VESSEL + blood_sub["endothelial"]
 
@@ -128,19 +134,53 @@ def make_markers_table_v2(dfs:dict, cell_types:list, all_genes:list) -> pd.DataF
         df[t] = df.index.isin(tt)
 
     df = df.astype(int)
+
+    # drop rows with all zeros
+    df = df.loc[(df.T != 0).any()]
+
     return df
 
 
 # %%
 taxonomy_file = root_path / "taxonomies" / TAXONOMY_TABLE_v2
+
 # %%
 # tests
-# dfs = get_taxonomy(version="v1")
-# dfs = get_taxonomy(version="v2")
-# dfs = get_taxonomy(file_path=taxonomy_file)
+dfs = get_taxonomy(version="v1")
+dfs = get_taxonomy(version="v2")
+dfs, all_genes = get_taxonomy(file_path=taxonomy_file)
 
-dfs, all_genes = get_taxonomy(version="v2")
 
+# %%
+full_cell_types = [
+    "oligo",
+    "opc",
+    # neuron
+    "glutamatergic",
+    "gabergic",
+    # astrocyte
+    "protoplasmic_astrocyte",
+    "fibrous_astrocyte",
+    # immune
+    "microglia",
+    "t_cell",
+    "b_cell",
+    # blood_vessel
+    "pericyte",
+    "endothelial",
+    # unknown
+    "unknown",
+]
+
+
+df = make_markers_table_v2(dfs, full_cell_types, all_genes)
+# In[ ]:
+# export to csv
+cellassign_file = root_path / "markers" / CELLASSIGN_FULL_MARKERS_TABLE
+df.to_csv(cellassign_file)
+# test
+markers_full = pd.read_csv(cellassign_file, index_col=0)
+print(markers_full)
 
 # %%
 cell_types = [
@@ -148,26 +188,87 @@ cell_types = [
     "opc",
     "glutamatergic",
     "gabergic",
-    "protoplasmic_astrocyte",
-    "fibrous_astrocyte",
-    "microglia",
-    "t_cell",
-    "b_cell",
-    "pericyte",
-    "endothelial",
+    "astrocyte",
+    "immune",
+    "blood",
     "unknown",
+]
+# dfs, all_genes = get_taxonomy(version="v2")
+
+df = make_markers_table_v2(dfs, cell_types, all_genes)
+
+# In[ ]:
+# export to csv
+cellassign_file = root_path / "markers" / CELLASSIGN_SIMPLE1_MARKERS_TABLE
+df.to_csv(cellassign_file)
+
+# In[ ]:
+# test
+markers_simple = pd.read_csv(cellassign_file, index_col=0)
+print(markers_simple)
+
+# %%
+
+# %%
+cell_types = [
+    "oligo",
+    "opc",
+    "glutamatergic",
+    "gabergic",
+    "astrocyte",
+    "immune",
+    "blood",
 ]
 
 df = make_markers_table_v2(dfs, cell_types, all_genes)
 
 # In[ ]:
 # export to csv
-cellassign_file = root_path / "markers" / CELLASSIGN_MARKERS_TABLE
+cellassign_file = root_path / "markers" / CELLASSIGN_SIMPLE2_MARKERS_TABLE
 df.to_csv(cellassign_file)
 
 # In[ ]:
 # test
-markers_new = pd.read_csv(cellassign_file, index_col=0)
-print(markers_new)
+# test
+markers_simple_nounk = pd.read_csv(cellassign_file, index_col=0)
+print(markers_simple_nounk)
+
+
+
+# Oligo   <- OLIGO: CLDN11	CNP	PLP1	ST18	MBP	MOG	MAG
+# ExN     <- NEURON+glutamatergic:GRIN2A	RBFOX3  SLC17A6	NEUROD6	SATB2
+# InN     <- NEURON+gabaergic:GRIN2A	RBFOX3 SLC32A1	GAD2	LHX6
+# Astro  <- ASTROCYTE: AQP4	RFX4
+# MG     <- IMMUNE (t and b cells are implicitly ignored or called microglia): PTPRC
+# OPC    <- OPC: LHFPL3	MEGF11	PCDH15	PDGFRA
+# VC       <- BLOOD_VESSEL: CD34
+
+# %%
+
+
+df = make_markers_table_v2(dfs, cell_types, all_genes)
+
+# In[ ]:
+# remap columns as above
+mapping = {"oligo": "Oligo",
+           "opc": "OPC",
+           "glutamatergic": "ExN",
+           "gabergic": "InN",
+           "astrocyte": "Astro",
+           "immune": "MG",
+           "blood": "VC"}
+
+
+df.rename(columns=mapping, inplace=True)
+
+# In[ ]:
+# export to csv
+cellassign_file = root_path / "markers" / CELLASSIGN_XYLENA_MARKERS_TABLE
+df.to_csv(cellassign_file)
+
+# In[ ]:
+# test
+markers_xyl = pd.read_csv(cellassign_file, index_col=0)
+print(markers_xyl)
 
 # %%
