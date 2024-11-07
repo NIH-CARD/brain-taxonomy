@@ -20,7 +20,7 @@ CELLASSIGN_FULL_MARKERS_TABLE = "cellassign_full_markers.csv"
 
 CELLASSIGN_SIMPLE1_MARKERS_TABLE = "cellassign_simple_markers.csv"
 CELLASSIGN_SIMPLE2_MARKERS_TABLE = "cellassign_simple_no_unknown_markers.csv"
-CELLASSIGN_XYLENA_MARKERS_TABLE = "cellassign_xylena_markers.csv"
+CELLASSIGN_CARD_MARKERS_TABLE = "cellassign_card_markers.csv"
 
 # In[ ]:
 root_path = Path.cwd()
@@ -263,12 +263,12 @@ df.rename(columns=mapping, inplace=True)
 
 # In[ ]:
 # export to csv
-cellassign_file = root_path / "markers" / CELLASSIGN_XYLENA_MARKERS_TABLE
+cellassign_file = root_path / "markers" / CELLASSIGN_CARD_MARKERS_TABLE
 df.to_csv(cellassign_file)
 
 # In[ ]:
 # test
-markers_xyl = pd.read_csv(cellassign_file, index_col=0)
-print(markers_xyl)
+markers_card = pd.read_csv(cellassign_file, index_col=0)
+print(markers_card)
 
 # %%
